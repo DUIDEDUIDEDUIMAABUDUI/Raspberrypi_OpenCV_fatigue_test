@@ -29,7 +29,12 @@ message(STATUS "libcamera found")
 message(STATUS "OpenCV version: ${OpenCV_VERSION}")
 
 # 包含头文件路径
-include_directories(${CMAKE_SOURCE_DIR} ${LIBCAMERA_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+include_directories(
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/libcam2opencv
+    ${LIBCAMERA_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+)
 
 # 添加子目录：libcam2opencv 封装模块
 add_subdirectory(libcam2opencv)
