@@ -12,7 +12,7 @@ Window::Window()
     myCallback.window = this;
     camera.registerCallback(&myCallback);
 
-    // 初始化热度计
+    // 设置热度计
     thermo = new QwtThermo;
     thermo->setFillBrush(QBrush(Qt::red));
     thermo->setScale(0, 255);
@@ -20,12 +20,13 @@ Window::Window()
 
     image = new QLabel;
 
+    // UI 布局
     hLayout = new QHBoxLayout();
     hLayout->addWidget(thermo);
     hLayout->addWidget(image);
     setLayout(hLayout);
 
-    // 启动摄像头
+    // 启动摄像头采集
     Libcam2OpenCVSettings settings;
     settings.width = 800;
     settings.height = 600;
@@ -38,27 +39,31 @@ Window::~Window()
     camera.stop();
 }
 
-// 异步处理 updateImage 函数
+// 异步检测图像 + 颜色通道修复
 void Window::updateImage(const cv::Mat &mat) {
-    cv::Mat input = mat.clone();  // 克隆图像用于后台处理
+    cv::Mat input = mat.clone();
 
     std::thread([this, input]() {
         cv::Mat output;
-        bool drowsy = detector.detect(input, output);  // 后台执行检测
+        bool drowsy = detector.detect(input, output);  // 包括人脸、EAR 等可视元素
 
-        // BGR 转 RGB
+        // ✅ BGR → RGB 颜色转换（防止颜色错乱）
         cv::Mat rgb;
         cv::cvtColor(output, rgb, cv::COLOR_BGR2RGB);
+
+        // ✅ 构造 Qt 图像格式
         QImage frame(rgb.data, rgb.cols, rgb.rows, rgb.step, QImage::Format_RGB888);
 
-        // 切回主线程更新 Qt 界面
+        // ✅ 切回主线程更新 UI
         QMetaObject::invokeMethod(this, [this, frame, drowsy]() {
             image->setPixmap(QPixmap::fromImage(frame));
+
             const int h = frame.height();
             const int w = frame.width();
             const QColor c = frame.pixelColor(w / 2, h / 2);
             thermo->setValue(c.lightness());
+
             update();
         });
-    }).detach();  // 分离线程，避免阻塞主线程
+    }).detach();  // ✅ 分离线程，防止阻塞主线程
 }
