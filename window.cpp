@@ -72,7 +72,6 @@ void Window::updateImage(const cv::Mat &mat) {
             const QColor c = safeFrame.pixelColor(w / 2, h / 2);
             thermo->setValue(c.lightness());
 
-            statusLabel->setText(drowsy ? "⚠️ 疲劳检测：警告！" : "状态：正常");
 
             update();
             busy = false;
