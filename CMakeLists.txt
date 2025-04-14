@@ -20,6 +20,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(PkgConfig REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(dlib REQUIRED)
 
 # 查找 libcamera
 pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
@@ -34,6 +35,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/libcam2opencv
     ${LIBCAMERA_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
+
 )
 
 # 添加子目录：libcam2opencv 封装模块
@@ -55,5 +57,6 @@ target_link_libraries(qtviewer
   cam2opencv                  # ✅ 你自定义的封装库
 lapack         # ✅ 添加 LAPACK 库
   blas           # ✅ 添加 BLAS 库（LAPACK 依赖）
+  dlib::dlib
 )
 
