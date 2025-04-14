@@ -20,6 +20,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(PkgConfig REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(dlib REQUIRED)
 
 # 查找 libcamera
 pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
