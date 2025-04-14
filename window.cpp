@@ -47,8 +47,7 @@ void Window::updateImage(const cv::Mat &mat) {
         bool drowsy = detector.detect(input, output);  // 后台执行检测
 
         // BGR 转 RGB
-        cv::Mat clone = mat.clone();
-        QImage frame(clone.data, clone.cols, clone.rows, clone.step, QImage::Format_RGB888);
+        QImage frame(input.data, input.cols, input.rows, input.step, QImage::Format_RGB888);
 
         // 切回主线程更新 Qt 界面
         QMetaObject::invokeMethod(this, [this, frame, drowsy]() {
