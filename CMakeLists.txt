@@ -52,7 +52,8 @@ target_link_libraries(qtviewer
   qwt-qt5                      # ✅ 直接链接，系统已装 .so 文件
   ${OpenCV_LIBS}
   PkgConfig::LIBCAMERA
-  cam2opencv                  # ✅ 你自定义的封装库
+  cam2opencv  
+  dlib::dlib             # ✅ 你自定义的封装库
 lapack         # ✅ 添加 LAPACK 库
   blas           # ✅ 添加 BLAS 库（LAPACK 依赖）
 )
