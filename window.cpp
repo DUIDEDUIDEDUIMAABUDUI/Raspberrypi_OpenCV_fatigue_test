@@ -61,11 +61,10 @@ void Window::updateImage(const cv::Mat &mat) {
 
         // BGR888 → Qt 图像（拷贝避免线程释放内存）
         // 手动转换 BGR → RGB
-        cv::Mat rgb;
-        cv::cvtColor(output, rgb, cv::COLOR_BGR2RGB);
+        
 
         // Qt 图像构建 + 深拷贝
-        QImage frame(rgb.data, rgb.cols, rgb.rows, rgb.step, QImage::Format_RGB888);
+        QImage frame(output.data, output.cols, output.rows, output.step, QImage::Format_RGB888);
         QImage safeFrame = frame.copy();  // 避免 cv::Mat 被线程销毁
 
 
