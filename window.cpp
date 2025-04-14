@@ -20,14 +20,13 @@ Window::Window()
     thermo->show();
 
     image = new QLabel;
-    statusLabel = new QLabel;
-    statusLabel->setStyleSheet("color: red; font-size: 18px; font-weight: bold;");
+    
 
     // UI 布局
     hLayout = new QHBoxLayout();
     hLayout->addWidget(thermo);
     hLayout->addWidget(image);
-    hLayout->addWidget(statusLabel);
+    
     setLayout(hLayout);
 
     // 启动摄像头
