@@ -38,25 +38,28 @@ Window::~Window()
     camera.stop();
 }
 
-// 异步处理 updateImage 函数
 void Window::updateImage(const cv::Mat &mat) {
-    cv::Mat input = mat.clone();  // 克隆图像用于后台处理
+    cv::Mat input = mat.clone();
 
     std::thread([this, input]() {
         cv::Mat output;
-        bool drowsy = detector.detect(input, output);  // 后台执行检测
+        bool drowsy = detector.detect(input, output);  // 检测结果保存在 output 中
 
-        // BGR 转 RGB
-        QImage frame(input.data, input.cols, input.rows, input.step, QImage::Format_RGB888);
+        if (output.empty()) return;
 
-        // 切回主线程更新 Qt 界面
+        // ❌ 不再转换颜色通道
+        QImage frame(output.data, output.cols, output.rows, output.step, QImage::Format_BGR888);
+
+        // ✅ 注意：此时格式应为 BGR888 而不是 RGB888
         QMetaObject::invokeMethod(this, [this, frame, drowsy]() {
             image->setPixmap(QPixmap::fromImage(frame));
+
             const int h = frame.height();
             const int w = frame.width();
             const QColor c = frame.pixelColor(w / 2, h / 2);
             thermo->setValue(c.lightness());
+
             update();
         });
-    }).detach();  // 分离线程，避免阻塞主线程
+    }).detach();
 }
