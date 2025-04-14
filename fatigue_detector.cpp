@@ -3,88 +3,22 @@
 #include <chrono>
 #include <map>
 
-FatigueDetector::FatigueDetector() {
-    try {
-        dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> predictor;
-    } catch (std::exception &e) {
-        std::cerr << "Failed to load shape predictor: " << e.what() << std::endl;
-    }
-
-    if (!face_cascade.load("/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml")) {
-        std::cerr << "Failed to load Haar cascade!" << std::endl;
-    }
-
-    eyeClosed = false;
-    eyeClosedDuration = 0.0;
-
-    KF.init(4, 2, 0);
-    KF.transitionMatrix = (cv::Mat_<float>(4, 4) << 1, 0, 1, 0,
-                                                     0, 1, 0, 1,
-                                                     0, 0, 1, 0,
-                                                     0, 0, 0, 1);
-    setIdentity(KF.measurementMatrix);
-    setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-5));
-    setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-1));
-    setIdentity(KF.errorCovPost, cv::Scalar::all(1));
-}
-
-float FatigueDetector::eye_aspect_ratio(const std::vector<cv::Point2f>& eye) {
-    float A = cv::norm(eye[1] - eye[5]);
-    float B = cv::norm(eye[2] - eye[4]);
-    float C = cv::norm(eye[0] - eye[3]);
-    return (A + B) / (2.0f * C);
-}
-
-std::vector<cv::Point2f> FatigueDetector::extract_eye(const dlib::full_object_detection& shape, bool left) {
-    std::vector<cv::Point2f> eye;
-    int start = left ? 36 : 42;
-    for (int i = 0; i < 6; ++i)
-        eye.emplace_back(shape.part(start + i).x(), shape.part(start + i).y());
-    return eye;
-}
-
-std::map<std::string, double> FatigueDetector::calculateEBBA(double ear, double eyeClosedDuration) {
-    std::map<std::string, double> ebba{
-        {"NORMAL", 0.0},
-        {"MEDIUM", 0.0},
-        {"FATIGUE", 0.0}
-    };
-
-    if (ear > EAR_WARNING_THRESHOLD) {
-        ebba["NORMAL"] = 0.9;
-        ebba["MEDIUM"] = 0.05;
-        ebba["FATIGUE"] = 0.05;
-    } else if (ear > EAR_THRESHOLD) {
-        ebba["NORMAL"] = 0.05;
-        ebba["MEDIUM"] = 0.9;
-        ebba["FATIGUE"] = 0.05;
-    } else {
-        if (eyeClosedDuration > 1.5) {
-            ebba["NORMAL"] = 0.05;
-            ebba["MEDIUM"] = 0.05;
-            ebba["FATIGUE"] = 0.9;
-        } else {
-            ebba["NORMAL"] = 0.2;
-            ebba["MEDIUM"] = 0.6;
-            ebba["FATIGUE"] = 0.2;
-        }
-    }
-
-    double total = ebba["NORMAL"] + ebba["MEDIUM"] + ebba["FATIGUE"];
-    for (auto& b : ebba) b.second /= total;
-    return ebba;
-}
-
 bool FatigueDetector::detect(const cv::Mat& frame, cv::Mat& output) {
+    // ✅ 检查输入图像是否为彩色
+    if (frame.channels() != 3) {
+        std::cerr << "[ERROR] Input frame must be a 3-channel BGR color image!" << std::endl;
+        return false;
+    }
+
+    output = frame.clone();  // ✅ 输出图像保留彩色（BGR）用于 Qt 显示
     cv::Mat gray;
-    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-    output = frame.clone();
+    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);  // 灰度图用于人脸检测
 
     std::vector<cv::Rect> faces;
     face_cascade.detectMultiScale(gray, faces, 1.1, 5, 0, cv::Size(80, 80));
     if (faces.empty()) return false;
 
-    // 最大人脸
+    // 找最大人脸
     cv::Rect biggest;
     int maxArea = 0;
     for (const auto& face : faces) {
@@ -95,6 +29,7 @@ bool FatigueDetector::detect(const cv::Mat& frame, cv::Mat& output) {
         }
     }
 
+    // 画人脸框
     cv::rectangle(output, biggest, cv::Scalar(255, 0, 0), 2);
     dlib::cv_image<dlib::bgr_pixel> cimg(frame);
     dlib::rectangle dlib_rect(biggest.x, biggest.y, biggest.x + biggest.width, biggest.y + biggest.height);
@@ -121,14 +56,14 @@ bool FatigueDetector::detect(const cv::Mat& frame, cv::Mat& output) {
     cv::Mat prediction = KF.predict();
     cv::Mat estimated = KF.correct(measurement);
     cv::Point2f filtered_center(estimated.at<float>(0), estimated.at<float>(1));
-    cv::circle(output, filtered_center, 4, cv::Scalar(0, 255, 255), -1);
+    cv::circle(output, filtered_center, 4, cv::Scalar(0, 255, 255), -1);  // 显示稳定追踪点
 
     float ear = (eye_aspect_ratio(left_eye) + eye_aspect_ratio(right_eye)) / 2.0f;
 
-    for (const auto& pt : left_eye) cv::circle(output, pt, 2, cv::Scalar(0, 255, 0), -1);
+    for (const auto& pt : left_eye)  cv::circle(output, pt, 2, cv::Scalar(0, 255, 0), -1);
     for (const auto& pt : right_eye) cv::circle(output, pt, 2, cv::Scalar(0, 255, 0), -1);
 
-    // EAR 状态融合判断
+    // EAR 模糊判断逻辑
     auto now = std::chrono::high_resolution_clock::now();
     if (ear < EAR_THRESHOLD && !eyeClosed) {
         lastBlinkStart = now;
@@ -153,6 +88,9 @@ bool FatigueDetector::detect(const cv::Mat& frame, cv::Mat& output) {
                     cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
         return true;
     }
+
+    // ✅ 输出图像通道数调试信息
+    std::cerr << "[DEBUG] output.channels() = " << output.channels() << std::endl;
 
     return false;
 }
