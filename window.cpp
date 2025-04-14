@@ -4,6 +4,7 @@
 #include <iostream>
 #include <thread>
 #include <QMetaObject>
+#include <atomic>
 
 FatigueDetector detector;
 
@@ -19,10 +20,14 @@ Window::Window()
     thermo->show();
 
     image = new QLabel;
+    statusLabel = new QLabel;
+    statusLabel->setStyleSheet("color: red; font-size: 18px; font-weight: bold;");
 
+    // UI 布局
     hLayout = new QHBoxLayout();
     hLayout->addWidget(thermo);
     hLayout->addWidget(image);
+    hLayout->addWidget(statusLabel);
     setLayout(hLayout);
 
     // 启动摄像头
@@ -38,28 +43,39 @@ Window::~Window()
     camera.stop();
 }
 
+// 异步图像处理 + UI 更新（加锁保护）
 void Window::updateImage(const cv::Mat &mat) {
+    static std::atomic<bool> busy = false;
+    if (busy) return;
+    busy = true;
+
     cv::Mat input = mat.clone();
 
     std::thread([this, input]() {
         cv::Mat output;
-        bool drowsy = detector.detect(input, output);  // 检测结果保存在 output 中
+        bool drowsy = detector.detect(input, output);  // 输出图像 + 疲劳状态
 
-        if (output.empty()) return;
+        if (output.empty()) {
+            busy = false;
+            return;
+        }
 
-        // ❌ 不再转换颜色通道
+        // BGR888 → Qt 图像（拷贝避免线程释放内存）
         QImage frame(output.data, output.cols, output.rows, output.step, QImage::Format_BGR888);
+        QImage safeFrame = frame.copy();
 
-        // ✅ 注意：此时格式应为 BGR888 而不是 RGB888
-        QMetaObject::invokeMethod(this, [this, frame, drowsy]() {
-            image->setPixmap(QPixmap::fromImage(frame));
+        QMetaObject::invokeMethod(this, [this, safeFrame, drowsy]() {
+            image->setPixmap(QPixmap::fromImage(safeFrame));
 
-            const int h = frame.height();
-            const int w = frame.width();
-            const QColor c = frame.pixelColor(w / 2, h / 2);
+            const int h = safeFrame.height();
+            const int w = safeFrame.width();
+            const QColor c = safeFrame.pixelColor(w / 2, h / 2);
             thermo->setValue(c.lightness());
 
+            statusLabel->setText(drowsy ? "⚠️ 疲劳检测：警告！" : "状态：正常");
+
             update();
+            busy = false;
         });
     }).detach();
 }
