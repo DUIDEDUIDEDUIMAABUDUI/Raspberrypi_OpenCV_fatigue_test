@@ -53,4 +53,4 @@ private:
     const double HIGH_FATIGUE_THRESHOLD = 0.8;
 };
 
-#endif
+#endif // FATIGUE_DETECTOR_H

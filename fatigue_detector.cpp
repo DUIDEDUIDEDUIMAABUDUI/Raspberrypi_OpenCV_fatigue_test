@@ -88,7 +88,6 @@ bool FatigueDetector::detect(const cv::Mat& frame, cv::Mat& output) {
 
     dlib::full_object_detection shape = predictor(cimg, faces[0]);
 
-    // EAR
     std::vector<dlib::point> left_eye, right_eye;
     for (int i = 36; i <= 41; ++i) left_eye.push_back(shape.part(i));
     for (int i = 42; i <= 47; ++i) right_eye.push_back(shape.part(i));
@@ -103,7 +102,6 @@ bool FatigueDetector::detect(const cv::Mat& frame, cv::Mat& output) {
         eyeClosed = false;
     }
 
-    // MAR
     std::vector<cv::Point> mouth;
     for (int i = 48; i <= 59; ++i)
         mouth.emplace_back(shape.part(i).x(), shape.part(i).y());
@@ -117,7 +115,6 @@ bool FatigueDetector::detect(const cv::Mat& frame, cv::Mat& output) {
         yawnDetected = false;
     }
 
-    // 模糊融合
     auto ebba = calculateEBBA(ear, eyeClosedDuration);
     auto mbba = calculateMBBA(mar, yawnDuration);
     if (!prevEBBA.empty()) ebba = combineBBA(prevEBBA, ebba);
@@ -125,7 +122,6 @@ bool FatigueDetector::detect(const cv::Mat& frame, cv::Mat& output) {
     prevEBBA = ebba;
     prevMBBA = mbba;
 
-    // 显示状态
     if (ebba["FATIGUE"] > HIGH_FATIGUE_THRESHOLD || mbba["Yawning"] > HIGH_FATIGUE_THRESHOLD) {
         cv::putText(output, "DROWSINESS ALERT!", cv::Point(50, 50),
                     cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
@@ -136,3 +132,4 @@ bool FatigueDetector::detect(const cv::Mat& frame, cv::Mat& output) {
     cv::putText(output, "MAR: " + std::to_string(mar), cv::Point(20, 60), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 0), 1);
     return false;
 }
+
