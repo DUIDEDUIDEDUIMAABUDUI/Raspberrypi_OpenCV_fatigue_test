@@ -8,10 +8,9 @@ project(CamViewer
     DESCRIPTION "Qt application with fatigue detection and libcamera input"
     LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter")
 
-# 自动处理 Qt 元对象（MOC/UIC/RCC）
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)

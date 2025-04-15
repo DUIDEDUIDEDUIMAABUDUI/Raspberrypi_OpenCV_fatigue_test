@@ -8,7 +8,7 @@ project(LibcameraToOpenCVWrapper
 	DESCRIPTION "Makes life easier for people needing to use libcamera"
 	LANGUAGES CXX)
 
-set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD 14)
 
 set (CMAKE_CXX_FLAGS "-pedantic -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter")
 
