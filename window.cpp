@@ -1,6 +1,5 @@
 #include "window.h"
 #include "fatigue_detector.h"
-
 #include <iostream>
 #include <thread>
 #include <QMetaObject>
@@ -13,7 +12,7 @@ Window::Window()
     myCallback.window = this;
     camera.registerCallback(&myCallback);
 
-    // 初始化热度计
+    
     thermo = new QwtThermo;
     thermo->setFillBrush(QBrush(Qt::red));
     thermo->setScale(0, 255);
@@ -22,14 +21,14 @@ Window::Window()
     image = new QLabel;
     
 
-    // UI 布局
+    
     hLayout = new QHBoxLayout();
     hLayout->addWidget(thermo);
     hLayout->addWidget(image);
     
     setLayout(hLayout);
 
-    // 启动摄像头
+    
     Libcam2OpenCVSettings settings;
     settings.width = 800;
     settings.height = 600;
@@ -42,7 +41,7 @@ Window::~Window()
     camera.stop();
 }
 
-// 异步图像处理 + UI 更新（加锁保护）
+
 void Window::updateImage(const cv::Mat &mat) {
     static std::atomic<bool> busy = false;
     if (busy) return;
@@ -52,20 +51,15 @@ void Window::updateImage(const cv::Mat &mat) {
 
     std::thread([this, input]() {
         cv::Mat output;
-        bool drowsy = detector.detect(input, output);  // 输出图像 + 疲劳状态
+        bool drowsy = detector.detect(input, output);
 
         if (output.empty()) {
             busy = false;
             return;
         }
 
-        // BGR888 → Qt 图像（拷贝避免线程释放内存）
-        // 手动转换 BGR → RGB
-        
-
-        // Qt 图像构建 + 深拷贝
         QImage frame(output.data, output.cols, output.rows, output.step, QImage::Format_RGB888);
-        QImage safeFrame = frame.copy();  // 避免 cv::Mat 被线程销毁
+        QImage safeFrame = frame.copy();
 
 
         QMetaObject::invokeMethod(this, [this, safeFrame, drowsy]() {

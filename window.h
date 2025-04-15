@@ -9,10 +9,8 @@
 
 #include "libcam2opencv.h"
 
-// class definition 'Window'
 class Window : public QWidget
 {
-    // must include the Q_OBJECT macro for for the Qt signals/slots framework to work with this class
     Q_OBJECT
 
 public:
@@ -21,7 +19,7 @@ public:
     void updateImage(const cv::Mat &mat);
 
     QwtThermo    *thermo;
-    QHBoxLayout  *hLayout;  // horizontal layout
+    QHBoxLayout  *hLayout;
     QLabel       *image;
 
     struct MyCallback : Libcam2OpenCV::Callback {
