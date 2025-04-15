@@ -8,6 +8,7 @@ project(CamViewer
     DESCRIPTION "Qt application with fatigue detection and libcamera input"
     LANGUAGES CXX)
 
+add_compile_options(-Wno-psabi)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter")
 
