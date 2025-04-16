@@ -84,4 +84,4 @@ void Window::updateImage(const cv::Mat &mat) {
     }).detach();
 }
 
-}
+
