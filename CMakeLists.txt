@@ -55,7 +55,6 @@ target_link_libraries(qtviewer
   PkgConfig::LIBCAMERA
   cam2opencv  
   dlib::dlib             
-  lapack         
-  blas          
+           
 )
 
