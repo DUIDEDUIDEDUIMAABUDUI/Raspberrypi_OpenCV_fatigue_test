@@ -58,18 +58,30 @@ void Window::updateImage(const cv::Mat &mat) {
             return;
         }
 
+        cv::cvtColor(output, output, cv::COLOR_BGR2RGB);
         QImage frame(output.data, output.cols, output.rows, output.step, QImage::Format_RGB888);
         QImage safeFrame = frame.copy();
 
-
         QMetaObject::invokeMethod(this, [this, safeFrame, drowsy]() {
+           
             image->setPixmap(QPixmap::fromImage(safeFrame));
+            update();
 
             
+            static int displayCount = 0;
+            static auto lastDisplay = std::chrono::steady_clock::now();
 
+            displayCount++;
+            auto nowDisplay = std::chrono::steady_clock::now();
+            if (std::chrono::duration_cast<std::chrono::seconds>(nowDisplay - lastDisplay).count() >= 1) {
+                qDebug() << "Display FPS:" << displayCount;
+                displayCount = 0;
+                lastDisplay = nowDisplay;
+            }
 
-            update();
             busy = false;
         });
     }).detach();
+}
+
 }
