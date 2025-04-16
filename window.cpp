@@ -65,10 +65,7 @@ void Window::updateImage(const cv::Mat &mat) {
         QMetaObject::invokeMethod(this, [this, safeFrame, drowsy]() {
             image->setPixmap(QPixmap::fromImage(safeFrame));
 
-            const int h = safeFrame.height();
-            const int w = safeFrame.width();
-            const QColor c = safeFrame.pixelColor(w / 2, h / 2);
-            thermo->setValue(c.lightness());
+            
 
 
             update();
