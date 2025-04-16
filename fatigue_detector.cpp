@@ -4,8 +4,8 @@ FatigueDetector::FatigueDetector() {
     dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> predictor;
 
     face_net = cv::dnn::readNetFromCaffe(
-        "models/deploy.prototxt",
-        "models/res10_300x300_ssd_iter_140000.caffemodel"
+        "deploy.prototxt",
+        "res10_300x300_ssd_iter_140000.caffemodel"
     );
     face_net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
     face_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
