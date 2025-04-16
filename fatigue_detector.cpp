@@ -6,8 +6,8 @@ FatigueDetector::FatigueDetector() {
 
     // 加载 OpenCV DNN 人脸检测模型
     face_net = cv::dnn::readNetFromCaffe(
-        "models/deploy.prototxt",
-        "models/res10_300x300_ssd_iter_140000.caffemodel"
+        "deploy.prototxt",
+        "res10_300x300_ssd_iter_140000.caffemodel"
     );
 
     // （可选）指定运行设备
